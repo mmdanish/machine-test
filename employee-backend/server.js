@@ -1,8 +1,8 @@
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
-import path from "path";  
-import { fileURLToPath } from 'url';  // Required for handling __dirname in ES modules
+import path from "path";
+import { fileURLToPath } from "url"; // Required for handling __dirname in ES modules
 
 // Define __dirname in ES module context
 const __filename = fileURLToPath(import.meta.url);
@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(cors());
 
 // Serve static files from the 'uploads' directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Connect to MongoDB
 mongoose
@@ -40,7 +40,7 @@ import multer from "multer";
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, 'uploads'));  // Use absolute path for the uploads directory
+    cb(null, path.join(__dirname, "uploads")); // Use absolute path for the uploads directory
   },
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`);
@@ -48,10 +48,10 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image/')) {
+  if (file.mimetype.startsWith("image/")) {
     cb(null, true);
   } else {
-    cb(new Error('Only image files are allowed!'), false);
+    cb(new Error("Only image files are allowed!"), false);
   }
 };
 
@@ -60,7 +60,8 @@ const upload = multer({ storage, fileFilter });
 // Create / Add API with file upload
 app.post("/api/employees", upload.single("profileImage"), async (req, res) => {
   try {
-    const { id, name, email, department, designation, joiningDate, salary } = req.body;
+    const { id, name, email, department, designation, joiningDate, salary } =
+      req.body;
 
     const employee = new Employee({
       id,
@@ -80,6 +81,81 @@ app.post("/api/employees", upload.single("profileImage"), async (req, res) => {
   }
 });
 
+// Read / Select All API
+app.get("/api/employees", async (req, res) => {
+  try {
+    const employees = await Employee.find();
+    res.status(200).json(employees);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching employees", error });
+  }
+});
+
+// Read / Select by ID API
+app.get("/api/employees/:id", async (req, res) => {
+  try {
+    const employee = await Employee.findOne({ id: req.params.id });
+    if (!employee) {
+      return res.status(404).json({ message: "Employee not found" });
+    }
+    res.status(200).json(employee);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching employee", error });
+  }
+});
+
+// Search API
+app.get("/api/employees/search", async (req, res) => {
+  try {
+    const { name, designation, department } = req.query;
+    const query = {};
+    if (name) query.name = { $regex: name, $options: "i" };
+    if (designation) query.designation = { $regex: designation, $options: "i" };
+    if (department) query.department = { $regex: department, $options: "i" };
+
+    const employees = await Employee.find(query);
+    res.status(200).json(employees);
+  } catch (error) {
+    res.status(500).json({ message: "Error searching employees", error });
+  }
+});
+
+// Update / Edit API
+app.put("/api/employees/:id", async (req, res) => {
+  try {
+    const updatedEmployee = await Employee.findOneAndUpdate(
+      { id: req.params.id },
+      req.body,
+      { new: true, runValidators: true }
+    );
+    if (!updatedEmployee) {
+      return res.status(404).json({ message: "Employee not found" });
+    }
+    res
+      .status(200)
+      .json({ message: "Employee updated successfully!", updatedEmployee });
+  } catch (error) {
+    res.status(400).json({ message: "Error updating employee", error });
+  }
+});
+
+// Delete / Remove API
+app.delete("/api/employees/:id", async (req, res) => {
+  try {
+    const deletedEmployee = await Employee.findOneAndDelete({
+      id: req.params.id,
+    });
+    if (!deletedEmployee) {
+      return res.status(404).json({ message: "Employee not found" });
+    }
+    res.status(200).json({ message: "Employee deleted successfully!" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting employee", error });
+  }
+});
+
 // Start the server
 const PORT = 4000;
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+app.listen(PORT, () =>
+  console.log(`Server running on http://localhost:${PORT}`)
+);
