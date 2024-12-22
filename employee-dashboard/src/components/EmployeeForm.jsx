@@ -4,12 +4,14 @@ import axios from "axios";
 
 const EmployeeForm = ({ onClose }) => {
   const [formData, setFormData] = useState({
+    id: "",
     firstName: "",
     lastName: "",
     department: "",
     designation: "",
-    joiningDate: "",
+    joiningDate: new Date(),
     salary: "",
+    email: "",
     profileImage: null,
   });
 
@@ -24,7 +26,7 @@ const EmployeeForm = ({ onClose }) => {
   const handleFileChange = (e) => {
     setFormData((prevData) => ({
       ...prevData,
-      profileImage: e.target.files[0], // Store the file object
+      profileImage: e.target.files[0],
     }));
   };
 
@@ -37,18 +39,29 @@ const EmployeeForm = ({ onClose }) => {
         employeeData.append(key, formData[key]);
       }
     }
+    console.log(employeeData)
 
     try {
-      const response = await axios.post("http://localhost:4000/api/employees", employeeData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const response = await axios.post(
+        "http://localhost:4000/api/employees",
+        employeeData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data", 
+          },
+        }
+      );
       alert("Employee created successfully!");
-      onClose(); // Close modal or reset form after successful submission
+      onClose(); 
     } catch (error) {
       alert("Error creating employee");
+      console.log(error.message);
     }
+  };
+
+  const formatDate = (date) => {
+    const options = { year: "numeric", month: "short", day: "numeric" };
+    return new Date(date).toLocaleDateString("en-US", options);
   };
 
   return (
@@ -62,10 +75,28 @@ const EmployeeForm = ({ onClose }) => {
         />
       </div>
       <form onSubmit={handleSubmit}>
+        {/* Employee ID */}
+        <div className="mb-4">
+          <label className="block text-gray-600 text-sm mb-1">
+            Employee ID
+          </label>
+          <input
+            type="text"
+            name="id"
+            className="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+            placeholder="Enter Employee ID"
+            value={formData.id}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
         {/* First Name and Last Name */}
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="block text-gray-600 text-sm mb-1">First Name</label>
+            <label className="block text-gray-600 text-sm mb-1">
+              First Name
+            </label>
             <input
               type="text"
               name="firstName"
@@ -77,7 +108,9 @@ const EmployeeForm = ({ onClose }) => {
             />
           </div>
           <div>
-            <label className="block text-gray-600 text-sm mb-1">Last Name</label>
+            <label className="block text-gray-600 text-sm mb-1">
+              Last Name
+            </label>
             <input
               type="text"
               name="lastName"
@@ -88,6 +121,20 @@ const EmployeeForm = ({ onClose }) => {
               required
             />
           </div>
+        </div>
+
+        {/* Email */}
+        <div className="mb-4">
+          <label className="block text-gray-600 text-sm mb-1">Email</label>
+          <input
+            type="email"
+            name="email"
+            className="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+            placeholder="Enter Email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
         </div>
 
         {/* Department */}
@@ -106,7 +153,9 @@ const EmployeeForm = ({ onClose }) => {
 
         {/* Designation */}
         <div className="mb-4">
-          <label className="block text-gray-600 text-sm mb-1">Designation</label>
+          <label className="block text-gray-600 text-sm mb-1">
+            Designation
+          </label>
           <input
             type="text"
             name="designation"
@@ -119,23 +168,22 @@ const EmployeeForm = ({ onClose }) => {
         </div>
 
         {/* Date of Joining */}
-        <div className="mb-4">
-          <label className="block text-gray-600 text-sm mb-1">Date of Joining</label>
-          <input
-            type="date"
-            name="joiningDate"
-            className="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
-            value={formData.joiningDate}
-            onChange={handleChange}
-            required
-          />
-        </div>
+        <label className="block text-gray-600 text-sm mb-1">
+          Date of Joining
+        </label>
+        <input
+          type="text"
+          name="joiningDate"
+          className="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+          value={formatDate(formData.joiningDate)} 
+          readOnly
+        />
 
         {/* Salary */}
         <div className="mb-4">
           <label className="block text-gray-600 text-sm mb-1">Salary</label>
           <input
-            type="text"
+            type="number"
             name="salary"
             className="w-full border border-gray-300 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
             placeholder="Enter Salary"
@@ -147,7 +195,9 @@ const EmployeeForm = ({ onClose }) => {
 
         {/* Image Upload */}
         <div className="mb-4">
-          <label className="block text-gray-600 text-sm mb-1">Upload Image</label>
+          <label className="block text-gray-600 text-sm mb-1">
+            Upload Image
+          </label>
           <input
             type="file"
             name="profileImage"
